@@ -1,6 +1,6 @@
 # Team-A---Admin
 
-create a virtual environment 
+#create a virtual environment 
 install the packages:
 pip install pandas
 pip install xlrd
