@@ -1,8 +1,8 @@
 # Team-A---Admin
 
 ## create a virtual environment 
-python venv env
-env\scripts\activate
+### python venv env
+### env\scripts\activate
 ## install the packages:
 ## pip install pandas
 ## pip install xlrd
