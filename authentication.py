@@ -46,6 +46,10 @@ fig.update_layout(
 graphJSON = json.dumps(fig, cls = plotly.utils.PlotlyJSONEncoder)
 #------------------------------------------------------------------------------------------
 
+
+
+
+
 app = Flask(__name__)
 
 #------------------------------------Admin Landing Page-----------------------------------
@@ -64,9 +68,7 @@ def index():
     return render_template('userlogin.html',year = datetime.now().year)
 
 #--------------------------------------------------------------------------------------------
-@app.route('/dashboard/<username>')
-def dashboard(username):
-    return render_template('index.html',name = username, graphJSON = graphJSON)
+
 #--------------------------------user registeration----------------------------------------
 
 @app.route('/register', methods = ["GET", "POST"])
@@ -115,7 +117,42 @@ exFile = 'requests.xlsx'
 df = pd.read_excel(exFile)
 trainer_frame = pd.read_excel('ExpertRegister.xlsx')
 
+#---------------------------------------plotting the course vs trainers--------------------------------------
+available_trainers = trainer_frame[trainer_frame['Availability'] == 'Yes']
 
+#group the data by course name count the no of trainers
+course_trainer_counts = available_trainers['Course Name'].value_counts().reset_index()
+course_trainer_counts.columns = ['Course Name', 'Count']
+
+#create a bar chart
+fig = px.bar(course_trainer_counts, x='Course Name', y='Count', title='Number of Available Trainers per Course') 
+fig.update_traces(
+    marker_color="#000080",  # customize the bar color 
+    selector=dict(type="bar"),
+    width=0.2,  # Adjust  bar width
+)
+# Layout customization
+fig.update_layout(
+    xaxis_title="Course Name",
+    yaxis_title="Number of Trainers",
+    bargap=0.2,  # Adjust  gap between bars
+    bargroupgap=0.1, 
+    plot_bgcolor='rgba(0,0,0,0)',  # Set plot background to transparent
+    paper_bgcolor='rgba(0,0,0,0)',  # Set paper background to transparent
+    modebar_remove="zoom"
+)
+
+
+bargraphJSON = json.dumps(fig, cls = plotly.utils.PlotlyJSONEncoder)
+#----------------------------------------------------------------------------------------------------------------
+
+#---------------------------------------------------Main Dashboard-------------------------------------------------
+@app.route('/dashboard/<username>')
+def dashboard(username):
+    return render_template('index.html',name = username, graphJSON = graphJSON,
+                           pendingrequests = len(df[df['Status'] == 'Pending']),
+                           count_of_trainers = trainer_frame['ID'].nunique(),
+                           bargraphJSON = bargraphJSON)
 #----------------------------Training Request Section--------------------------------------
 #cource request
 @app.route('/request/<username>')
@@ -129,7 +166,8 @@ def course_request(username):
     pending_req=df[df['Status']=='Pending']
     # course = pending_req['Course Name']
     # print(course)
-    return render_template('request.html',name = username,data=pending_req,course_to_trainers = course_to_trainers)
+    return render_template('request.html',name = username,data=pending_req,
+                           course_to_trainers = course_to_trainers)
 
 #course approval
 @app.route('/approve/<int:id>/<username>',methods=["GET", "POST"])
